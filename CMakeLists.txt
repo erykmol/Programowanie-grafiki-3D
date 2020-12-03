@@ -17,8 +17,6 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(${3rdParty}/src/glfw3)
 
-add_library(glad OBJECT ${glad_SOURCES})
-
 find_package(OpenGL REQUIRED)
 
 link_libraries(OpenGL::GL glfw)
@@ -32,3 +30,5 @@ add_subdirectory(src/Exercises/Uniform)
 add_subdirectory(src/Exercises/PVM)
 add_subdirectory(src/Exercises/Pyramid)
 add_subdirectory(src/Exercises/BackfaceCulling)
+add_subdirectory(src/Exercises/WindowSize)
+add_subdirectory(src/Exercises/Zoom)
