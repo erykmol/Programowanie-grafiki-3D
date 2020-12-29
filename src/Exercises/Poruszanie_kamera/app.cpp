@@ -14,7 +14,6 @@
 
 void SimpleShapeApplication::init() {
 
-
     auto program = xe::create_program(std::string(PROJECT_DIR) + "/shaders/base_vs.glsl",
                                       std::string(PROJECT_DIR) + "/shaders/base_fs.glsl");
 
@@ -23,6 +22,8 @@ void SimpleShapeApplication::init() {
         std::cerr << "Cannot create program from " << std::string(PROJECT_DIR) + "/shaders/base_vs.glsl" << " and ";
         std::cerr << std::string(PROJECT_DIR) + "/shaders/base_fs.glsl" << " shader files" << std::endl;
     }
+
+    set_camera(new Camera);
 
     auto u_modifiers_index = glGetUniformBlockIndex(program, "Modifiers");
     if (u_modifiers_index == GL_INVALID_INDEX) {
@@ -39,17 +40,43 @@ void SimpleShapeApplication::init() {
         glUniformBlockBinding(program, u_transformations_index, 1);
     }
 
+//    std::vector<GLfloat> vertices = {
+//            -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f,// Top-left
+//            0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,// Top-center
+//            0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f,// Top-right
+//            0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f,// Bottom-right
+//            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f,// Bottom-left
+//    };
+
     std::vector<GLfloat> vertices = {
-            -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f,// Top-left
-            0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,// Top-center
-            0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f,// Top-right
-            0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f,// Bottom-right
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f,// Bottom-left
+            0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+
+            0.5f, 1.0f, 0.5f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+
+            0.5f, 1.0f, 0.5f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+
+            0.5f, 1.0f, 0.5f, 0.0f, 1.0f, 1.0f,
+            1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+
+            0.5f, 1.0f, 0.5f, 0.0f, 1.0f, 0.0f,
+            1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
     };
 
     std::vector<GLushort> indices = {
-            0,1,2,0,2,3,3,4,0
+            0,2,1,3,1,2,4,5,6,7,8,9,10,11,12,13,14,15
     };
+
+    this->set_camera(new Camera);
+    this->set_controler(new CameraControler(camera()));
 
     GLuint v_buffer_handle;
     glGenBuffers(1, &v_buffer_handle);
@@ -73,23 +100,20 @@ void SimpleShapeApplication::init() {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float), &strength);
     glBufferSubData(GL_UNIFORM_BUFFER, 4 * sizeof(float), 3 * sizeof(float), light);
 
-    GLuint upvm_handle(0u);
-    glGenBuffers(1, &upvm_handle);
+    glGenBuffers(1, &u_pvm_buffer_);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, upvm_handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
 
-    glm::mat4 M(1.0f);
-    glm::mat4 V = glm::lookAt(glm::vec3{0.0, -0.5, 2.0}, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0, 0.0, 1.0});
-    glm::mat4 P = glm::perspective(glm::half_pi<float>()/2.0f, 650.0f / 480.0f,0.1f, 100.0f);
-    glm::mat4 PVM = P * V * M;
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &PVM[0]);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+//    glm::mat4 M(1.0f);
+//    glm::mat4 V = glm::lookAt(glm::vec3{-0.8, 1.2, 1.0}, glm::vec3{0.5f, 0.5f, 0.0f}, glm::vec3{0.0, 1.0, 0.0});
+//    glm::mat4 P = glm::perspective(glm::pi<float>()/2.0f, 1.0f,0.1f, 100.0f);
+//    glm::mat4 PVM = P * V * M;
+//    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &PVM[0]);
+//    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo_handle);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 1, upvm_handle);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_pvm_buffer_);
 
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
@@ -107,17 +131,54 @@ void SimpleShapeApplication::init() {
 
     int w, h;
     std::tie(w, h) = frame_buffer_size();
+    camera()->perspective(glm::pi<float>() / 4.0, (float)w / h, 0.1f, 100.0f);
+    camera()->look_at(glm::vec3{-0.8, 1.2, 1.0}, glm::vec3{0.5f, 0.5f, 0.0f}, glm::vec3{0.0, 1.0, 0.0});
 
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
 
     glViewport(0, 0, w, h);
-
-    glEnable(GL_DEPTH_TEST);
     glUseProgram(program);
+}
+
+void SimpleShapeApplication::framebuffer_resize_callback(int w, int h) {
+    Application::framebuffer_resize_callback(w, h);
+    glViewport(0, 0, w, h);
+    camera()->set_aspect((float) w / h);
 }
 
 void SimpleShapeApplication::frame() {
     glBindVertexArray(vao_);
-    glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid *>(0));
+    glEnable(GL_DEPTH_TEST);
+    glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid *>(0));
 //    glDrawArrays(GL_TRIANGLES, 0, 9);
     glBindVertexArray(0);
+
+    auto PVM = camera()->projection() * this->camera()->view();
+    glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &PVM[0]);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void SimpleShapeApplication::mouse_button_callback(int button, int action, int mods) {
+    Application::mouse_button_callback(button, action, mods);
+
+    if (controler_) {
+        double x, y;
+        glfwGetCursorPos(window_, &x, &y);
+
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+            controler_->LMB_pressed(x, y);
+
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+            controler_->LMB_released(x, y);
+    }
+}
+
+void SimpleShapeApplication::cursor_position_callback(double x, double y) {
+    Application::cursor_position_callback(x, y);
+    if (controler_) {
+        controler_->mouse_moved(x, y);
+    }
 }
