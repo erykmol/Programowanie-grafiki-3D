@@ -58,15 +58,17 @@ void SimpleShapeApplication::init() {
 
     glGenBuffers(1, &u_light_buffer_);
     glBindBuffer(GL_UNIFORM_BUFFER, u_light_buffer_);
-    glBufferData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, 4 * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
 
     light_.position = V*glm::vec4(0.0f, 0.0f, 0.5f, 1.0f);
     light_.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     light_.a = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
+    light_.ambient = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::vec4), &light_.position[0]);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::vec4), sizeof(glm::vec4), &light_.color[0]);
     glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::vec4), sizeof(glm::vec4), &light_.a[0]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::vec4), sizeof(glm::vec4), &light_.ambient[0]);
 
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
