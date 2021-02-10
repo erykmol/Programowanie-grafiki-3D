@@ -39,16 +39,6 @@ void SimpleShapeApplication::init() {
     set_camera(new Camera);
     set_controler(new CameraControler(camera()));
 
-//    GLuint ubo_handle(0u);
-//    glGenBuffers(1, &ubo_handle);
-//    glBindBuffer(GL_UNIFORM_BUFFER, ubo_handle);
-//    glBufferData(GL_UNIFORM_BUFFER, 8 * sizeof(float), nullptr, GL_STATIC_DRAW);
-//    float strength = 0.5f;
-//    float light[3] = {1.0f, 0.2f, 0.1f};
-//
-//    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float), &strength);
-//    glBufferSubData(GL_UNIFORM_BUFFER, 4 * sizeof(float), 3 * sizeof(float), light);
-
     glGenBuffers(1, &u_pvm_buffer_);
     glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
@@ -61,8 +51,8 @@ void SimpleShapeApplication::init() {
     int w, h;
     std::tie(w, h) = frame_buffer_size();
     camera()->perspective(glm::pi<float>() / 4.0, (float)w / h, 0.1f, 100.0f);
-    camera()->look_at(glm::vec3{0.0, 0.0, 30.0}, glm::vec3{0.5f, 0.5f, 0.0f}, glm::vec3{0.0, 0.0, 1.0});
-
+    camera()->look_at(glm::vec3{ -2.0f, 4.0f, 10.0f }, glm::vec3{ 0.0f, 3.0f, -5.0f }, glm::vec3{ 0.0, 1.0, 0.0 });
+    camera()->rotate_around_center(1.8f, glm::vec3{ 0.0f, 1.0f, 1.0f });
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
@@ -86,20 +76,20 @@ void SimpleShapeApplication::frame() {
 
     glm::mat4 main_TR = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, 0.0f));
 
-    glm::mat4 R = glm::rotate(glm::mat4(1.0f), rotation_angle ,glm::vec3(0.0f, 0.0f, 1.0f));
-    glBindBuffer(GL_UNIFORM_BUFFER, this->u_pvm_buffer_);
+    glm::mat4 R = glm::rotate(glm::mat4(1.0f), rotation_angle ,glm::vec3(0.0f, 1.0f, 0.0f));
+    glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
 
-    auto rotated = this->camera()->view() * R;
+    auto rotated = camera()->view() * R;
 
     auto orbital_rotation_period = 20.0f;
     auto orbital_rotation_angle = 2.0f*glm::pi<float>()*elapsed_time/orbital_rotation_period;
     auto a = 10.0f;
     auto b = 8.0f;
-    float x = a*cos(orbital_rotation_angle);
-    float y = b*sin(orbital_rotation_angle);
+    float x = a*sin(orbital_rotation_angle);
+    float z = b*cos(orbital_rotation_angle);
 
-    glm::mat4 O = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,0.0f));
-    auto orbited = this->camera()->view() * O * R;
+    glm::mat4 O = glm::translate(glm::mat4(1.0f), glm::vec3(x,0.0f, z));
+    auto orbited = camera()->view() * O * R;
 
     auto moon_rotation_period = 10.0f;
     auto moon_rotation_angle = 2.0f*glm::pi<float>()*elapsed_time/moon_rotation_period;
@@ -107,10 +97,10 @@ void SimpleShapeApplication::frame() {
     float y_m = 3.0f*sin(moon_rotation_angle);
     glm::mat4 O_moon = glm::translate(glm::mat4(1.0f), glm::vec3(x_m,y_m,0));
     glm::mat4 R_moon = glm::rotate(glm::mat4(1.0f), moon_rotation_angle, glm::vec3(0.0f, 0.0f, 1.0f));
-    glm::mat4 S = glm::scale(glm::mat4(1.0f), glm::vec3(0.794f, 0.794f, 0.794f));
+    glm::mat4 S = glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 0.8f));
 
     glm::mat4 moon_transform = orbited * O_moon * R_moon * S;
-    auto orbited2 = this->camera()->view() * O;
+    auto orbited2 = camera()->view() * O;
     auto satellite_rotation_period = 2.0f;
     auto satellite_rotation_angle = 2.0f*glm::pi<float>()*elapsed_time/satellite_rotation_period;
     float x_sat = 1.5*cos(satellite_rotation_angle);
@@ -133,24 +123,7 @@ void SimpleShapeApplication::frame() {
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &PVM[0]);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         pyramid->draw();
-
-//        auto PVM = transform * this->camera()->projection() * this->camera()->view();
-//        glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
-//        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &PVM[0]);
-//        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-//this->pyramid->draw();
     }
-
-//    glBindVertexArray(vao_);
-//    glEnable(GL_DEPTH_TEST);
-//    glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid *>(0));
-////    glDrawArrays(GL_TRIANGLES, 0, 9);
-//    glBindVertexArray(0);
-//
-//    auto PVM = camera()->projection() * this->camera()->view();
-//    glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
-//    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &PVM[0]);
-//    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void SimpleShapeApplication::mouse_button_callback(int button, int action, int mods) {
